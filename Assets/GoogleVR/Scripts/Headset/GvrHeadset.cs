@@ -25,7 +25,6 @@ using Gvr.Internal;
 /// such prefab in a scene.
 ///
 /// This is a singleton object.
-[HelpURL("https://developers.google.com/vr/unity/reference/class/GvrHeadset")]
 public class GvrHeadset : MonoBehaviour {
   private static GvrHeadset instance;
 
@@ -79,7 +78,7 @@ public class GvrHeadset : MonoBehaviour {
   }
 #endregion  // DELEGATE_HANDLERS
 
-#region GVR_HEADSET_PROPERTIES
+#region GVR_STANDALONE_PROPERTIES
   /// Returns |true| if the current headset supports positionally tracked, 6DOF head poses.
   /// Returns |false| if only rotation-based head poses are supported.
   public static bool SupportsPositionalTracking {
@@ -87,20 +86,13 @@ public class GvrHeadset : MonoBehaviour {
       if (instance == null) {
         return false;
       }
-      try {
-        return instance.headsetProvider.SupportsPositionalTracking;
-      }
-      catch(Exception e) {
-        Debug.LogError("Error reading SupportsPositionalTracking: " + e.Message);
-        return false;
-      }
+      return instance.headsetProvider.SupportsPositionalTracking;
     }
   }
 
   /// If a floor is found, populates floorHeight with the detected height.
   /// Otherwise, leaves the value unchanged.
   /// Returns true if value retrieval was successful, false otherwise (depends on tracking state).
-  [SuppressMemoryAllocationError(IsWarning=true, Reason="A getter for a float should not allocate.")]
   public static bool TryGetFloorHeight(ref float floorHeight) {
     if (instance == null) {
       return false;
@@ -151,7 +143,7 @@ public class GvrHeadset : MonoBehaviour {
     }
     return instance.headsetProvider.TryGetSafetyCylinderOuterRadius(ref outerRadius);
   }
-#endregion  // GVR_HEADSET_PROPERTIES
+#endregion  // GVR_STANDALONE_PROPERTIES
 
   private GvrHeadset() {
     headsetState.Initialize();

@@ -28,26 +28,7 @@ using UnityEngine.EventSystems;
 /// This abstract class should be implemented by pointers doing 1 of 2 things:
 /// 1. Responding to movement of the users head (Cardboard gaze-based-pointer).
 /// 2. Responding to the movement of the daydream controller (Daydream 3D pointer).
-public abstract class GvrBasePointer : MonoBehaviour, IGvrControllerInputDeviceReceiver {
-  // When using a Daydream (3DoF) controller:
-  // - Only TouchPadButton is mapped to mouse left click.
-  private const GvrControllerButton leftButtonMask3Dof =
-      GvrControllerButton.TouchPadButton;
-  // When using a Daydream 6DoF controller:
-  // - TouchPadButton and Trigger are mapped to mouse left click.
-  // - App and Grip are mapped to mouse right click.
-  private const GvrControllerButton leftButtonMask6Dof =
-      GvrControllerButton.TouchPadButton |
-      GvrControllerButton.Trigger;
-  private const GvrControllerButton rightButtonMask6Dof =
-      GvrControllerButton.App |
-      GvrControllerButton.Grip;
-
-  private GvrControllerButton triggerButton;
-  private GvrControllerButton triggerButtonDown;
-  private GvrControllerButton triggerButtonUp;
-  private int lastUpdateFrame;
-
+public abstract class GvrBasePointer : MonoBehaviour {
   public enum RaycastMode {
     /// Casts a ray from the camera through the target of the pointer.
     /// This is ideal for reticles that are always rendered on top.
@@ -171,162 +152,63 @@ public abstract class GvrBasePointer : MonoBehaviour, IGvrControllerInputDeviceR
     }
   }
 
-  public GvrControllerInputDevice ControllerInputDevice { get; set; }
-
-  private void OnEnable() {
-    triggerButton = 0;
-    triggerButtonDown = 0;
-    triggerButtonUp = 0;
-  }
-
-  private void UpdateTriggerState() {
-    if (lastUpdateFrame != Time.frameCount) {
-      lastUpdateFrame = Time.frameCount;
-
-      GvrControllerButton allButtonsMask = 0;
-      if (ControllerInputDevice != null
-          && ControllerInputDevice.SupportsPositionalTracking) {
-        allButtonsMask = leftButtonMask6Dof | rightButtonMask6Dof;
-      } else {
-        allButtonsMask = leftButtonMask3Dof;
-      }
-
-      GvrControllerButton buttonDown = 0;
-      GvrControllerButton buttonUp = 0;
-#if !UNITY_EDITOR
-      // Cardboard button events come through as mouse button 0 and are
-      // mapped to TouchPadButton.
-      if (Input.GetMouseButtonDown(0)) {
-        buttonDown |= GvrControllerButton.TouchPadButton;
-      }
-      if (Input.GetMouseButtonUp(0)) {
-        buttonUp |= GvrControllerButton.TouchPadButton;
-      }
-#endif
-      if (ControllerInputDevice != null) {
-        buttonDown |= ControllerInputDevice.ButtonsDown;
-        buttonUp |= ControllerInputDevice.ButtonsUp;
-      }
-      buttonDown &= allButtonsMask;
-      buttonUp &= allButtonsMask;
-
-      // Only allow one button down at a time. If one is down, ignore the rest.
-      if (triggerButton != 0) {
-        buttonDown &= triggerButton;
-      } else {
-        // Mask off everything except the right-most bit that is set in case
-        // more than one button went down in the same frame.
-        buttonDown &= (GvrControllerButton)(-(int)buttonDown);
-      }
-      // Ignore ups from buttons whose down we ignored.
-      buttonUp &= triggerButton;
-
-      // Build trigger button state from filtered ups and downs to ensure
-      // actual (A-down, B-down, A-up, B-up) results in
-      // event (A-down, A-up) instead of
-      // event (A-down, A-up, B-down, B-up).
-      triggerButton |= buttonDown;
-      triggerButton &= ~buttonUp;
-      triggerButtonDown = buttonDown;
-      triggerButtonUp = buttonUp;
-    }
-  }
-
   /// If true, the trigger was just pressed. This is an event flag:
   /// it will be true for only one frame after the event happens.
-  /// Defaults to mouse button 0 down on Cardboard or
-  /// ControllerInputDevice.GetButtonDown(TouchPadButton) on Daydream.
-  /// Can be overridden to change the trigger.
+  /// Defaults to GvrControllerInput.ClickButtonDown, can be overridden to change the trigger.
   public virtual bool TriggerDown {
     get {
-      UpdateTriggerState();
-      return triggerButtonDown != 0;
+      bool isTriggerDown = Input.GetMouseButtonDown(0);
+      return isTriggerDown || GvrControllerInput.ClickButtonDown;
     }
   }
 
   /// If true, the trigger is currently being pressed. This is not
   /// an event: it represents the trigger's state (it remains true while the trigger is being
   /// pressed).
-  /// Defaults to mouse button 0 state on Cardboard or
-  /// ControllerInputDevice.GetButton(TouchPadButton) on Daydream.
-  /// Can be overridden to change the trigger.
+  /// Defaults to GvrControllerInput.ClickButton, can be overridden to change the trigger.
   public virtual bool Triggering {
     get {
-      UpdateTriggerState();
-      return triggerButton != 0;
+      bool isTriggering = Input.GetMouseButton(0);
+      return isTriggering || GvrControllerInput.ClickButton;
     }
   }
 
   /// If true, the trigger was just released. This is an event flag:
   /// it will be true for only one frame after the event happens.
-  /// Defaults to mouse button 0 up on Cardboard or
-  /// ControllerInputDevice.GetButtonUp(TouchPadButton) on Daydream.
-  /// Can be overridden to change the trigger.
+  /// Defaults to GvrControllerInput.ClickButtonUp, can be overridden to change the trigger.
   public virtual bool TriggerUp {
     get {
-      UpdateTriggerState();
-      return triggerButtonUp != 0;
-    }
-  }
-
-  internal PointerEventData.InputButton InputButtonDown {
-    get {
-      if (triggerButton == 0 ||
-          (triggerButton & leftButtonMask6Dof) != 0) {
-        return PointerEventData.InputButton.Left;
-      } else {
-        return PointerEventData.InputButton.Right;
-      }
-    }
-  }
-
-  internal GvrControllerButton ControllerButtonDown {
-    get {
-      return triggerButton;
+      bool isTriggerDown = Input.GetMouseButtonUp(0);
+      return isTriggerDown || GvrControllerInput.ClickButtonUp;
     }
   }
 
   /// If true, the user just started touching the touchpad. This is an event flag (it is true
   /// for only one frame after the event happens, then reverts to false).
   /// Used by _GvrPointerScrollInput_ to generate OnScroll events using Unity's Event System.
-  /// Defaults to ControllerInputDevice.GetButtonDown(TouchPadTouch), can be overridden to change
-  /// the input source.
+  /// Defaults to GvrControllerInput.TouchDown, can be overridden to change the input source.
   public virtual bool TouchDown {
     get {
-      if (ControllerInputDevice == null) {
-        return false;
-      } else {
-        return ControllerInputDevice.GetButtonDown(GvrControllerButton.TouchPadTouch);
-      }
+      return GvrControllerInput.TouchDown;
     }
   }
 
   /// If true, the user is currently touching the touchpad.
   /// Used by _GvrPointerScrollInput_ to generate OnScroll events using Unity's Event System.
-  /// Defaults to ControllerInputDevice.GetButton(TouchPadTouch), can be overridden to change
-  /// the input source.
+  /// Defaults to GvrControllerInput.IsTouching, can be overridden to change the input source.
   public virtual bool IsTouching {
     get {
-      if (ControllerInputDevice == null) {
-        return false;
-      } else {
-        return ControllerInputDevice.GetButton(GvrControllerButton.TouchPadTouch);
-      }
+      return GvrControllerInput.IsTouching;
     }
   }
 
   /// If true, the user just stopped touching the touchpad. This is an event flag (it is true
   /// for only one frame after the event happens, then reverts to false).
   /// Used by _GvrPointerScrollInput_ to generate OnScroll events using Unity's Event System.
-  /// Defaults to ControllerInputDevice.GetButtonUp(TouchPadTouch), can be overridden to change
-  /// the input source.
+  /// Defaults to GvrControllerInput.TouchUp, can be overridden to change the input source.
   public virtual bool TouchUp {
     get {
-      if (ControllerInputDevice == null) {
-        return false;
-      } else {
-        return ControllerInputDevice.GetButtonUp(GvrControllerButton.TouchPadTouch);
-      }
+      return GvrControllerInput.TouchUp;
     }
   }
 
@@ -334,19 +216,11 @@ public abstract class GvrBasePointer : MonoBehaviour, IGvrControllerInputDeviceR
   /// If not touching, this is the position of the last touch (when the finger left the touchpad).
   /// The X and Y range is from 0 to 1.
   /// (0, 0) is the top left of the touchpad and (1, 1) is the bottom right of the touchpad.
-  /// Used by `GvrPointerScrollInput` to generate OnScroll events using Unity's Event System.
-  /// Defaults to `ControllerInputDevice.TouchPos` but translated to top-left-relative coordinates
-  /// for backwards compatibility. Can be overridden to change the input source.
+  /// Used by _GvrPointerScrollInput_ to generate OnScroll events using Unity's Event System.
+  /// Defaults to GvrControllerInput.TouchPos, can be overridden to change the input source.
   public virtual Vector2 TouchPos {
     get {
-      if (ControllerInputDevice == null) {
-        return Vector2.zero;
-      } else {
-        Vector2 touchPos = ControllerInputDevice.TouchPos;
-        touchPos.x = (touchPos.x / 2.0f) + 0.5f;
-        touchPos.y = (-touchPos.y / 2.0f) + 0.5f;
-        return touchPos;
-      }
+      return GvrControllerInput.TouchPos;
     }
   }
 
@@ -442,8 +316,8 @@ public abstract class GvrBasePointer : MonoBehaviour, IGvrControllerInputDeviceR
   /// Returns a point in worldspace a specified distance along the pointer.
   /// What this point will be is different depending on the raycastMode.
   ///
-  /// Because raycast modes differ, use this function instead of manually calculating a point
-  /// projected from the pointer.
+  /// Due to the the differences in raycast modes, it is recommended to use this function
+  /// instead of attempting to calculate a point projected out from the pointer yourself.
   public Vector3 GetPointAlongPointer(float distance) {
     PointerRay pointerRay = GetRayForDistance(distance);
     return pointerRay.ray.GetPoint(distance - pointerRay.distanceFromStart);

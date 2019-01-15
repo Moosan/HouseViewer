@@ -20,7 +20,6 @@ using UnityEngine.EventSystems;
 
 /// Exposes events from _GvrEventExecutor_ that are fired by _GvrPointerInputModule_ to the editor.
 /// Makes it possible to handle EventSystem events globally.
-[HelpURL("https://developers.google.com/vr/unity/reference/class/GvrAllEventsTrigger")]
 public class GvrAllEventsTrigger : MonoBehaviour {
 
   [Serializable]

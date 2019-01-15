@@ -9,7 +9,7 @@
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
+// See the License for the specific language governing permissioßns and
 // limitations under the License.
 
 using Gvr;
@@ -32,9 +32,11 @@ namespace Gvr.Internal {
 
     /// Need to store the state of the buttons from the previous frame.
     /// This is because Input.GetMouseButtonDown and Input.GetMouseButtonUp
-    /// don't work when called after WaitForEndOfFrame, which is when ReadState is called.
+    /// Don't work when called after WaitForEndOfFrame, which is when ReadState is called.
+    private bool wasClickButton;
+    private bool wasAppButton;
+    private bool wasHomeButton;
     private bool wasTouching;
-    private GvrControllerButton lastButtonsState;
 
     private const float ROTATE_SENSITIVITY = 4.5f;
     private const float TOUCH_SENSITIVITY = .12f;
@@ -80,18 +82,10 @@ namespace Gvr.Internal {
       get { return false; }
     }
 
-    public int MaxControllerCount {
-      get { return 1; }
+    internal MouseControllerProvider() {
     }
 
-    internal MouseControllerProvider() {}
-
-    public void Dispose() {}
-
-    public void ReadState(ControllerState outState, int controller_id) {
-      if (controller_id != 0) {
-        return;
-      }
+    public void ReadState(ControllerState outState) {
       lock (state) {
         UpdateState();
 
@@ -123,7 +117,7 @@ namespace Gvr.Internal {
         Input.GetAxis(AXIS_MOUSE_Y)
       );
 
-      if (0 != (state.buttonsState & GvrControllerButton.TouchPadTouch)) {
+      if (state.isTouching) {
         UpdateTouchPos();
       } else {
         UpdateOrientation();
@@ -143,7 +137,7 @@ namespace Gvr.Internal {
     private void UpdateOrientation() {
       Vector3 deltaDegrees = Vector3.Scale(mouseDelta, INVERT_Y) * ROTATE_SENSITIVITY;
 
-      state.gyro = deltaDegrees * (Mathf.Deg2Rad / Time.unscaledDeltaTime);
+      state.gyro = deltaDegrees * (Mathf.Deg2Rad / Time.deltaTime);
 
       Quaternion yaw = Quaternion.AngleAxis(deltaDegrees.x, Vector3.up);
       Quaternion pitch = Quaternion.AngleAxis(deltaDegrees.y, Vector3.right);
@@ -151,30 +145,32 @@ namespace Gvr.Internal {
     }
 
     private void UpdateButtonStates() {
-      state.buttonsState = 0;
-      if (IsClickButtonPressed) {
-        state.buttonsState |= GvrControllerButton.TouchPadButton;
-      }
-      if (IsAppButtonPressed) {
-        state.buttonsState |= GvrControllerButton.App;
-      }
-      if (IsHomeButtonPressed) {
-        state.buttonsState |= GvrControllerButton.System;
-      }
-      if (IsTouching) {
-        state.buttonsState |= GvrControllerButton.TouchPadTouch;
-      }
+      state.clickButtonState = IsClickButtonPressed;
+      state.clickButtonDown = state.clickButtonState && !wasClickButton;
+      state.clickButtonUp = !state.clickButtonState && wasClickButton;
 
-      state.SetButtonsUpDownFromPrevious(lastButtonsState);
-      lastButtonsState = state.buttonsState;
-
-      if (0 != (state.buttonsUp & GvrControllerButton.TouchPadTouch)) {
+      state.isTouching = IsTouching;
+      state.touchDown = state.isTouching && !wasTouching;
+      state.touchUp = !state.isTouching && wasTouching;
+      if (state.touchUp) {
         ClearTouchPos();
       }
 
-      if (0 != (state.buttonsUp & GvrControllerButton.System)) {
+      state.appButtonState = IsAppButtonPressed;
+      state.appButtonDown = state.appButtonState && !wasAppButton;
+      state.appButtonUp = !state.appButtonState && wasAppButton;
+
+      state.homeButtonState = IsHomeButtonPressed;
+      state.homeButtonDown = state.homeButtonState && !wasHomeButton;
+
+      if (!state.homeButtonState && wasHomeButton) {
         Recenter();
       }
+
+      wasClickButton = state.clickButtonState;
+      wasTouching = state.isTouching;
+      wasAppButton = state.appButtonState;
+      wasHomeButton = state.homeButtonState;
     }
 
     private void Recenter() {
@@ -189,9 +185,12 @@ namespace Gvr.Internal {
 
     private void ClearState() {
       state.connectionState = GvrConnectionState.Disconnected;
-      state.buttonsState = 0;
-      state.buttonsDown = 0;
-      state.buttonsUp = 0;
+      state.clickButtonState = false;
+      state.clickButtonDown = false;
+      state.clickButtonUp = false;
+      state.appButtonState = false;
+      state.appButtonDown = false;
+      state.appButtonUp = false;
       ClearTouchPos();
     }
   }

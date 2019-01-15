@@ -22,7 +22,6 @@ using System.Collections.Generic;
 /// <summary>
 /// Plays video using Exoplayer rendering it on the main texture.
 /// </summary>
-[HelpURL("https://developers.google.com/vr/unity/reference/class/GvrVideoPlayerTexture")]
 public class GvrVideoPlayerTexture : MonoBehaviour {
 
   /// <summary>

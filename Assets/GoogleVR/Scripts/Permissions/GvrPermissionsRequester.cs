@@ -9,16 +9,14 @@
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
+// See the License for the specific language governing permissioßns and
 // limitations under the License.
 #if UNITY_ANDROID || UNITY_EDITOR
 using UnityEngine;
 using System;
 using System.Collections.Generic;
-using Gvr.Internal;
 
 // Requests dangerous permissions at runtime
-[HelpURL("https://developers.google.com/vr/unity/reference/class/GvrPermissionsRequester")]
 public class GvrPermissionsRequester {
 
   // Permissions are requested via an Android Activity Fragment java object.
@@ -34,9 +32,8 @@ public class GvrPermissionsRequester {
   private static GvrPermissionsRequester theInstance;
 
   /// The singleton instance of the PermissionsRequester class,
-  /// lazily instantiated.
+  /// lazily instanciated.
   public static GvrPermissionsRequester Instance {
-    [SuppressMemoryAllocationError(IsWarning=false, Reason="Lazy-loading getter is allowed to allocate sometimes.")]
     get {
       if (theInstance == null) {
         theInstance = new GvrPermissionsRequester();
@@ -71,12 +68,10 @@ public class GvrPermissionsRequester {
 #endif  // !UNITY_ANDROID || UNITY_EDITOR
   }
 
-  [SuppressMemoryAllocationError(IsWarning=true)]
   public bool IsPermissionGranted(string permission) {
     return permissionsFragment.Call<bool>("hasPermission", permission);
   }
 
-  [SuppressMemoryAllocationError(IsWarning=true)]
   public bool[] HasPermissionsGranted(string[] permissions) {
     Debug.Log("Calling HasPermissionsGranted: " + permissions);
 

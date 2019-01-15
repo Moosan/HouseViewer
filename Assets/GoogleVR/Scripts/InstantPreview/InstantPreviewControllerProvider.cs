@@ -42,7 +42,10 @@ namespace Gvr.Internal {
       public bool homeButtonState;
     }
 
-    private GvrControllerButton prevButtonsState;
+    private bool prevTouchState;
+    private bool prevClickButtonState;
+    private bool prevAppButtonState;
+    private bool prevHomeButtonState;
 
     [DllImport(InstantPreview.dllName)]
     private static extern void ReadControllerState(out NativeControllerState nativeControllerState);
@@ -61,26 +64,25 @@ namespace Gvr.Internal {
       outState.gyro = new Vector3(-nativeControllerState.gyro.x, -nativeControllerState.gyro.y, nativeControllerState.gyro.z);
       outState.accel = new Vector3(nativeControllerState.accel.x, nativeControllerState.accel.y, -nativeControllerState.accel.z);
       outState.touchPos = nativeControllerState.touchPos;
+      outState.isTouching = nativeControllerState.isTouching;
+      outState.touchDown = nativeControllerState.isTouching && !prevTouchState;
+      outState.touchUp = !nativeControllerState.isTouching && prevTouchState;
+      outState.appButtonState = nativeControllerState.appButtonState;
+      outState.appButtonDown = nativeControllerState.appButtonState && !prevAppButtonState;
+      outState.appButtonUp = !nativeControllerState.appButtonState && prevAppButtonState;
+      outState.clickButtonState = nativeControllerState.clickButtonState;
+      outState.clickButtonDown = nativeControllerState.clickButtonState && !prevClickButtonState;
+      outState.clickButtonUp = !nativeControllerState.clickButtonState && prevClickButtonState;
       outState.batteryLevel = (GvrControllerBatteryLevel)nativeControllerState.batteryLevel;
       outState.isCharging = nativeControllerState.isCharging;
       outState.recentered = nativeControllerState.isRecentered;
+      outState.homeButtonState = nativeControllerState.homeButtonState;
+      outState.homeButtonDown = nativeControllerState.homeButtonState && !prevHomeButtonState;
 
-      outState.buttonsState = 0;
-      if (nativeControllerState.appButtonState) {
-        outState.buttonsState |= GvrControllerButton.App;
-      }
-      if (nativeControllerState.clickButtonState) {
-        outState.buttonsState |= GvrControllerButton.TouchPadButton;
-      }
-      if (nativeControllerState.homeButtonState) {
-        outState.buttonsState |= GvrControllerButton.System;
-      }
-      if (nativeControllerState.isTouching) {
-        outState.buttonsState |= GvrControllerButton.TouchPadTouch;
-      }
-
-      outState.SetButtonsUpDownFromPrevious(prevButtonsState);
-      prevButtonsState = outState.buttonsState;
+      prevTouchState = nativeControllerState.isTouching;
+      prevAppButtonState = nativeControllerState.appButtonState;
+      prevClickButtonState = nativeControllerState.clickButtonState;
+      prevHomeButtonState = nativeControllerState.homeButtonState;
     }
   }
 }

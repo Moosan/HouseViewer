@@ -15,14 +15,12 @@
 using System;
 using UnityEngine;
 using UnityEngine.Assertions;
-using Gvr.Internal;
 
 /// Visualizes a reticle using a Quad.
 /// Provides tuning options to control how the reticle scales and rotates based
 /// on distance from the camera.
 [RequireComponent(typeof(MeshRenderer))]
 [RequireComponent(typeof(MeshFilter))]
-[HelpURL("https://developers.google.com/vr/unity/reference/class/GvrControllerReticleVisual")]
 public class GvrControllerReticleVisual : MonoBehaviour {
   [Serializable]
   public struct FaceCameraData {
@@ -72,7 +70,6 @@ public class GvrControllerReticleVisual : MonoBehaviour {
   private Vector3 preRenderLocalScale;
   private Quaternion preRenderLocalRotation;
 
-  [SuppressMemoryAllocationError(IsWarning=true, Reason="Pending documentation.")]
   public void RefreshMesh() {
     ReticleMeshSizeMeters = 1.0f;
     ReticleMeshSizeRatio = 1.0f;

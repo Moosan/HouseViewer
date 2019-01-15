@@ -15,8 +15,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-using Gvr.Internal;
-
 /// This script provides an implemention of Unity's `BaseInputModule` class, so
 /// that Canvas-based (_uGUI_) UI elements and 3D scene objects can be
 /// interacted with in a Gvr Application.
@@ -49,7 +47,6 @@ using Gvr.Internal;
 ///   - Set the parent of GvrReticlePointer to the main camera.
 ///
 [AddComponentMenu("GoogleVR/GvrPointerInputModule")]
-[HelpURL("https://developers.google.com/vr/unity/reference/class/GvrPointerInputModule")]
 public class GvrPointerInputModule : BaseInputModule, IGvrInputModuleController {
   /// Determines whether Pointer input is active in VR Mode only (`true`), or all of the
   /// time (`false`).  Set to false if you plan to use direct screen taps or other
@@ -164,12 +161,10 @@ public class GvrPointerInputModule : BaseInputModule, IGvrInputModuleController 
     }
   }
 
-  [SuppressMemoryAllocationError(IsWarning=true, Reason="Pending documentation.")]
   public override bool ShouldActivateModule() {
     return Impl.ShouldActivateModule();
   }
 
-  [SuppressMemoryAllocationError(IsWarning=true, Reason="Pending documentation.")]
   public override void DeactivateModule() {
     Impl.DeactivateModule();
   }
@@ -178,7 +173,6 @@ public class GvrPointerInputModule : BaseInputModule, IGvrInputModuleController 
     return Impl.IsPointerOverGameObject(pointerId);
   }
 
-  [SuppressMemoryAllocationError(IsWarning=true, Reason="Pending documentation.")]
   public override void Process() {
     UpdateImplProperties();
     Impl.Process();
@@ -191,7 +185,6 @@ public class GvrPointerInputModule : BaseInputModule, IGvrInputModuleController 
     UpdateImplProperties();
   }
 
-  [SuppressMemoryAllocationError(IsWarning=true, Reason="Pending documentation.")]
   public bool ShouldActivate() {
     return base.ShouldActivateModule();
   }
@@ -200,12 +193,10 @@ public class GvrPointerInputModule : BaseInputModule, IGvrInputModuleController 
     base.DeactivateModule();
   }
 
-  [SuppressMemoryAllocationError(IsWarning=true, Reason="Pending documentation.")]
   public new GameObject FindCommonRoot(GameObject g1, GameObject g2) {
     return BaseInputModule.FindCommonRoot(g1, g2);
   }
 
-  [SuppressMemoryAllocationError(IsWarning=true, Reason="Pending documentation.")]
   public new BaseEventData GetBaseEventData() {
     return base.GetBaseEventData();
   }

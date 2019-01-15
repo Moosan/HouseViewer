@@ -21,7 +21,6 @@ using System.IO;
 using System.Threading;
 
 namespace Gvr.Internal {
-  [HelpURL("https://developers.google.com/vr/unity/reference/class/InstantPreview")]
   public class InstantPreview : MonoBehaviour {
     private const string NoDevicesFoundAdbResult = "error: no devices/emulators found";
 
@@ -237,7 +236,7 @@ namespace Gvr.Internal {
       }
     }
 
-    void UpdateCamera(Camera camera) {
+    void UpdateCamera(Camera camera, GameObject cameraObject, Transform cameraTransform) {
 
       EyeCamera eyeCamera;
 
@@ -248,8 +247,7 @@ namespace Gvr.Internal {
       if (connected) {
         if (GetHeadPose(out headPose, out timestamp)) {
           SetEditorEmulatorsEnabled(false);
-          camera.transform.localRotation = Quaternion.LookRotation(headPose.GetColumn(2), headPose.GetColumn(1));
-          camera.transform.localPosition = camera.transform.localRotation * headPose.GetRow(3) * -1;
+          cameraTransform.localRotation = Quaternion.LookRotation(headPose.GetColumn(2), headPose.GetColumn(1));
         } else {
           SetEditorEmulatorsEnabled(true);
         }
@@ -332,7 +330,11 @@ namespace Gvr.Internal {
       connected = newConnectionState;
 
       foreach (KeyValuePair<Camera, EyeCamera> eyeCamera in eyeCameras) {
-        UpdateCamera(eyeCamera.Key);
+        var mainCamera = eyeCamera.Key;
+        var mainCameraObject = mainCamera.gameObject;
+        var mainCameraTransform = mainCameraObject.transform;
+
+        UpdateCamera(mainCamera, mainCameraObject, mainCameraTransform);
       }
     }
 
@@ -345,6 +347,8 @@ namespace Gvr.Internal {
     }
 
     void EnsureCamera(Camera camera) {
+      var cameraObject = camera.gameObject;
+
       // renderTexture might still be null so this creates and assigns it.
       if (renderTexture == null) {
         if (OutputResolution != Resolutions.WindowSized) {
@@ -374,12 +378,8 @@ namespace Gvr.Internal {
           // Destroys the eye cameras.
           EyeCamera curEyeCamera;
           if (eyeCameras.TryGetValue(oldCamera, out curEyeCamera)) {
-            if (curEyeCamera.leftEyeCamera != null) {
-              Destroy(curEyeCamera.leftEyeCamera.gameObject);
-            }
-            if (curEyeCamera.rightEyeCamera != null) {
-              Destroy(curEyeCamera.rightEyeCamera.gameObject);
-            }
+            Destroy(curEyeCamera.leftEyeCamera.gameObject);
+            Destroy(curEyeCamera.rightEyeCamera.gameObject);
           }
 
           // Removes eye camera entry from dictionary.
@@ -525,8 +525,8 @@ namespace Gvr.Internal {
 
         var outputBuilder = new StringBuilder();
         var errorBuilder = new StringBuilder();
-        process.OutputDataReceived += (o, ef) => outputBuilder.AppendLine(ef.Data);
-        process.ErrorDataReceived += (o, ef) => errorBuilder.AppendLine(ef.Data);
+        process.OutputDataReceived += (o, ef) => outputBuilder.Append(ef.Data);
+        process.ErrorDataReceived += (o, ef) => errorBuilder.Append(ef.Data);
 
         process.Start();
         process.BeginOutputReadLine();

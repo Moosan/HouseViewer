@@ -21,7 +21,6 @@ using UnityEditor;
 using UnityEngine;
 
 [ExecuteInEditMode]
-[HelpURL("https://developers.google.com/vr/unity/reference/class/InstantPreviewHelper")]
 public class InstantPreviewHelper : MonoBehaviour {
   public static string AdbPath;
 
