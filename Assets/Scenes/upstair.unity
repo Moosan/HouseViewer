@@ -1354,7 +1354,7 @@ LODGroup:
   m_FadeMode: 0
   m_AnimateCrossFading: 0
   m_LODs:
-  - screenRelativeHeight: 0.085188024
+  - screenRelativeHeight: 0.06829723
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 130671281}
@@ -2770,7 +2770,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0711ee67a1b0341cfa924161292d8fb6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_lightMode: 1
+  m_lightMode: 2
 --- !u!108 &378479087
 Light:
   m_ObjectHideFlags: 0
